@@ -1,0 +1,22 @@
+[package]
+name = "bookcorpus"
+description = "Bookcorpus dataset in convenient rust format"
+version = "0.0.1"
+edition = "2021"
+
+
+[lib]
+name = "bookcorpus"
+
+[dependencies]
+bzip2 = "0.4.4"
+dirs = "5.0.1"
+futures = "0.3.30"
+indicatif = "0.17.8"
+num_cpus = "1.16.0"
+rand = "0.8.5"
+reqwest = { version = "0.12.5", features = ["stream"] }
+thiserror = "1.0.63"
+tokio = { version = "1.39.2", features = ["fs", "macros", "rt", "rt-multi-thread"] }
+tokio-util = { version = "0.7.11", features = ["io"] }
+bytes = "*"
