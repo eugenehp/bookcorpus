@@ -20,6 +20,13 @@ impl Cache {
         &self.path
     }
 
+    pub(crate) fn blob_path(&self, etag: &str) -> PathBuf {
+        let mut blob_path = self.path().clone();
+        std::fs::create_dir_all(&blob_path).ok();
+        blob_path.push(etag);
+        blob_path
+    }
+
     pub(crate) fn temp_path(&self) -> PathBuf {
         let mut path = self.path().clone();
         path.push("tmp");

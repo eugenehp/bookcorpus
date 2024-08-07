@@ -1,4 +1,5 @@
 use std::cmp::min;
+use std::ops::Deref;
 use std::path::PathBuf;
 use futures::TryStreamExt as _;
 use indicatif::{ ProgressBar, ProgressStyle };
@@ -45,6 +46,20 @@ impl Api {
     }
 
     pub async fn download(&self) -> Result<PathBuf, ApiError> {
+        let url = self.url.clone();
+        let chunks = url.split("/").collect::<Vec<&str>>();
+        let filename = chunks.last().unwrap();
+        let blob_path = self.cache.blob_path(filename);
+
+        if !blob_path.exists() {
+            let tmp_filename = self.download_tempfile().await.unwrap();
+            tokio::fs::rename(&tmp_filename, &blob_path).await.unwrap();
+        }
+
+        Ok(blob_path)
+    }
+
+    pub async fn download_tempfile(&self) -> Result<PathBuf, ApiError> {
         let filename = self.cache.temp_path();
 
         let res = self.client.get(self.url.clone()).send().await?;
