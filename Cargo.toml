@@ -3,6 +3,9 @@ name = "bookcorpus"
 description = "Bookcorpus dataset in convenient rust format"
 version = "0.0.1"
 edition = "2021"
+license = "MIT"
+repository = "https://github.com/eugenehp/bookcorpus"
+keywords = ["dataset", "ml", "nlp", "english", "books"]
 
 
 [lib]
