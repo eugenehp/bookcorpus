@@ -1,6 +1,6 @@
 use std::cmp::min;
-use std::ops::Deref;
 use std::path::PathBuf;
+use archiver_rs::{ Archive as _, ArchiverError, Compressed as _ };
 use futures::TryStreamExt as _;
 use indicatif::{ ProgressBar, ProgressStyle };
 use reqwest::Client;
@@ -45,11 +45,40 @@ impl Api {
         Api::default()
     }
 
-    pub async fn download(&self) -> Result<PathBuf, ApiError> {
+    pub fn get_filename(&self) -> String {
         let url = self.url.clone();
         let chunks = url.split("/").collect::<Vec<&str>>();
         let filename = chunks.last().unwrap();
-        let blob_path = self.cache.blob_path(filename);
+        filename.to_string()
+    }
+
+    pub fn get_filename_path(&self) -> PathBuf {
+        self.cache.blob_path(&self.get_filename())
+    }
+
+    // TODO: migrate to tokio version, once this is merged https://github.com/zip-rs/zip2/pull/121
+    // TODO: add progress bar
+    pub fn unzip(&self) -> Result<Vec<String>, ArchiverError> {
+        let zip_path = self.get_filename_path();
+        println!("Unzip for {}", zip_path.to_string_lossy());
+
+        let mut bz = archiver_rs::Bzip2::open(zip_path.as_path()).unwrap();
+        let target_path = zip_path.to_string_lossy().replace(".bz2", "");
+        let target_path = PathBuf::from(target_path);
+
+        if !target_path.exists() {
+            bz.decompress(target_path.as_path()).unwrap();
+        }
+
+        let mut tar = archiver_rs::Tar::open(target_path.as_path()).unwrap();
+        tar.extract(self.cache.path()).unwrap();
+
+        let mut tar = archiver_rs::Tar::open(target_path.as_path()).unwrap();
+        tar.files()
+    }
+
+    pub async fn download(&self) -> Result<PathBuf, ApiError> {
+        let blob_path = self.get_filename_path();
 
         if !blob_path.exists() {
             let tmp_filename = self.download_tempfile().await.unwrap();
